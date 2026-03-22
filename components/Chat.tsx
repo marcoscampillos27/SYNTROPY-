@@ -1,0 +1,55 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { ChatMessage as ChatMessageType } from "@/types";
+import ChatMessage from "./ChatMessage";
+import ChatInput from "./ChatInput";
+
+interface ChatProps {
+  messages: ChatMessageType[];
+  onSendMessage: (content: string) => void;
+  isLoading?: boolean;
+  sidebarOpen?: boolean;
+}
+
+export default function Chat({
+  messages,
+  onSendMessage,
+  isLoading,
+  sidebarOpen = true,
+}: ChatProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
+
+  return (
+    <div className="flex h-full flex-col bg-[var(--bg-surface)]">
+      <div
+        className="border-b border-[var(--border-light)] px-[24px] pb-[16px] pt-[20px] transition-[padding] duration-[250ms]"
+        style={{ paddingLeft: sidebarOpen ? 24 : 56 }}
+      >
+        <span className="text-[13px] font-medium text-[var(--text-muted)]">
+          Chat socrático
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-[14px] overflow-y-auto px-[24px] py-[20px]">
+        {messages.map((msg) => (
+          <ChatMessage key={msg.id} message={msg} />
+        ))}
+        {isLoading && (
+          <div className="animate-fade-in flex items-center gap-[3px] px-[4px] py-[8px] text-[18px] text-[var(--text-faint)]">
+            <span className="animate-dot-1">·</span>
+            <span className="animate-dot-2">·</span>
+            <span className="animate-dot-3">·</span>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <ChatInput onSend={onSendMessage} disabled={isLoading} />
+    </div>
+  );
+}
