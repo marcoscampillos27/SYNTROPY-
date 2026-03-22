@@ -336,7 +336,7 @@ function SessionContent() {
       id: crypto.randomUUID(),
       role: "assistant",
       content:
-        "Describe con tus propias palabras la decisión que necesitas tomar — aquí en el chat o directamente en el lienzo. Yo te acompañaré con preguntas.",
+        "¿Qué decisión necesitas tomar? Escríbela aquí o en la primera sección del lienzo — cuanto más concreta, mejor. Yo no te daré respuestas, pero te haré las preguntas que necesitas para llegar a la tuya.",
       createdAt: new Date().toISOString(),
     };
 

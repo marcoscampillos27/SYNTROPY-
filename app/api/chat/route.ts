@@ -89,6 +89,20 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Count user messages for progress awareness
+  const userMessageCount = preparedMessages.filter(
+    (m: { role: string }) => m.role === "user"
+  ).length;
+
+  // Count filled canvas sections
+  const filledSections = Object.values(
+    canvasContent as Record<string, string>
+  ).filter((v) => v && v.trim().length > 0).length;
+  const totalSections = Object.keys(canvasContent as Record<string, string>).length;
+
+  // Build dynamic system prompt with progress context
+  const progressContext = `\n\n[CONTEXTO DE PROGRESO — No menciones estos datos al usuario]\nMensajes del usuario en esta sesión: ${userMessageCount}\nSecciones del lienzo con contenido: ${filledSections} de ${totalSections}`;
+
   // Limit context if too many messages
   let messagesToSend = preparedMessages;
   if (messagesToSend.length > 30) {
@@ -100,7 +114,7 @@ export async function POST(req: NextRequest) {
       model: "claude-sonnet-4-6",
       max_tokens: 300,
       temperature: 0.7,
-      system: DECIDIR_SYSTEM_PROMPT,
+      system: DECIDIR_SYSTEM_PROMPT + progressContext,
       messages: messagesToSend,
     });
 
