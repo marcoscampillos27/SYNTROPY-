@@ -3,7 +3,17 @@
     "allow": [
       "Bash(npx create-next-app@latest . --typescript --tailwind --app --src-dir=false --import-alias=\"@/*\" --eslint --turbopack --yes)",
       "Read(//Users/marcoscampilloslazaro/Desktop/MARCOS/METACOGNICIÓN/**)",
-      "Bash(npx create-next-app@latest syntropy --typescript --tailwind --app --src-dir=false --import-alias=\"@/*\" --eslint --turbopack --yes)"
+      "Bash(npx create-next-app@latest syntropy --typescript --tailwind --app --src-dir=false --import-alias=\"@/*\" --eslint --turbopack --yes)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(lsof -i:3001)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(lsof -ti:3001)",
+      "Bash(xargs kill:*)",
+      "Bash(lsof -ti:3000)",
+      "Bash(kill -9 56094)",
+      "Bash(npx next:*)",
+      "Bash(kill 57714)"
     ]
   }
 }
