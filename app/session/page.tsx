@@ -42,6 +42,7 @@ function SessionContent() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"canvas" | "chat">("canvas");
   const [chatOpen, setChatOpen] = useState(true);
+  const [chatWidth, setChatWidth] = useState(380);
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState("Guardado");
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
@@ -319,7 +320,7 @@ function SessionContent() {
     setSections(decidirTemplate.map((t) => ({ ...t, value: "" })));
     setSaveStatus("Guardado");
     setIsLoading(false);
-    setChatOpen(false);
+    setChatOpen(true);
 
     window.history.pushState(null, "", `/session?id=${newSession.id}`);
   };
@@ -452,12 +453,36 @@ function SessionContent() {
           </button>
         )}
 
-        {/* Chat panel (right side) */}
+        {/* Chat panel (right side) with resize handle */}
         {chatOpen && (
           <div
-            className="h-full shrink-0 border-l border-[var(--border-light)]"
-            style={{ width: "380px" }}
+            className="relative h-full shrink-0 border-l border-[var(--border-light)]"
+            style={{ width: `${chatWidth}px` }}
           >
+            {/* Drag handle */}
+            <div
+              className="absolute left-0 top-0 z-10 h-full w-[4px] cursor-col-resize transition-colors duration-150 hover:bg-[var(--accent-green)]"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                const startX = e.clientX;
+                const startWidth = chatWidth;
+                const onMouseMove = (ev: MouseEvent) => {
+                  const delta = startX - ev.clientX;
+                  const newWidth = Math.min(Math.max(startWidth + delta, 280), 700);
+                  setChatWidth(newWidth);
+                };
+                const onMouseUp = () => {
+                  document.removeEventListener("mousemove", onMouseMove);
+                  document.removeEventListener("mouseup", onMouseUp);
+                  document.body.style.cursor = "";
+                  document.body.style.userSelect = "";
+                };
+                document.body.style.cursor = "col-resize";
+                document.body.style.userSelect = "none";
+                document.addEventListener("mousemove", onMouseMove);
+                document.addEventListener("mouseup", onMouseUp);
+              }}
+            />
             <Chat
               messages={messages}
               onSendMessage={handleSendMessage}

@@ -143,15 +143,6 @@ export default function Sidebar({
         >
           + Nueva sesión
         </button>
-        <button
-          onClick={() => {
-            router.push("/");
-            if (isMobile) onClose();
-          }}
-          className="shrink-0 cursor-pointer rounded-[10px] border border-[var(--border)] bg-transparent px-[12px] py-[10px] text-[12px] font-medium text-[var(--text-secondary)] transition-all duration-150 hover:bg-[var(--bg-page)]"
-        >
-          Modos
-        </button>
       </div>
 
       {/* Search */}
