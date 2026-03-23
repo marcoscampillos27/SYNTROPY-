@@ -23,7 +23,7 @@ export default function Home() {
           id: crypto.randomUUID(),
           role: "assistant",
           content:
-            "¿Con qué parte necesitas ayuda? Puedo ayudarte a pensar sobre cualquier sección del lienzo.",
+            "Empieza por el lienzo — escribe lo que tengas claro. Yo estaré aquí leyendo lo que escribas. Si te atascas, cuéntamelo. Y si veo algo que quizá no estás viendo, te lo señalaré.",
           createdAt: new Date().toISOString(),
         },
       ],

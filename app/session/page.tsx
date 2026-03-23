@@ -41,7 +41,7 @@ function SessionContent() {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"canvas" | "chat">("canvas");
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState("Guardado");
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
@@ -298,7 +298,7 @@ function SessionContent() {
       id: crypto.randomUUID(),
       role: "assistant",
       content:
-        "¿Con qué parte necesitas ayuda? Puedo ayudarte a pensar sobre cualquier sección del lienzo.",
+        "Empieza por el lienzo — escribe lo que tengas claro. Yo estaré aquí leyendo lo que escribas. Si te atascas, cuéntamelo. Y si veo algo que quizá no estás viendo, te lo señalaré.",
       createdAt: new Date().toISOString(),
     };
 
