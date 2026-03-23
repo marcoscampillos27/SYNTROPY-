@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { modes } from "@/lib/modes";
 import { getActiveSession, saveSession, completeSession } from "@/lib/storage";
 import { Session } from "@/types";
-import { useState } from "react";
+import ModeCard from "@/components/ModeCard";
+import FakeDoorDialog from "@/components/FakeDoorDialog";
 import ActiveSessionDialog from "@/components/ActiveSessionDialog";
 
 export default function Home() {
   const router = useRouter();
+  const [dialogMode, setDialogMode] = useState<string | null>(null);
   const [showActiveDialog, setShowActiveDialog] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
@@ -23,7 +27,7 @@ export default function Home() {
           id: crypto.randomUUID(),
           role: "assistant",
           content:
-            "¿Qué decisión necesitas tomar? Escríbela aquí o en la primera sección del lienzo — cuanto más concreta, mejor. Yo no te daré respuestas, pero te haré las preguntas que necesitas para llegar a la tuya.",
+            "Describe con tus propias palabras la decisión que necesitas tomar — aquí en el chat o directamente en el lienzo. Yo te acompañaré con preguntas.",
           createdAt: new Date().toISOString(),
         },
       ],
@@ -34,13 +38,18 @@ export default function Home() {
     router.push(`/session?id=${newSession.id}`);
   };
 
-  const handleStart = () => {
-    const active = getActiveSession();
-    if (active) {
-      setActiveSessionId(active.id);
-      setShowActiveDialog(true);
+  const handleModeClick = (mode: (typeof modes)[number]) => {
+    if (mode.active) {
+      const active = getActiveSession();
+      if (active) {
+        setActiveSessionId(active.id);
+        setShowActiveDialog(true);
+      } else {
+        createNewSession();
+      }
     } else {
-      createNewSession();
+      console.log("fake_door_click:", mode.id);
+      setDialogMode(mode.name);
     }
   };
 
@@ -61,29 +70,42 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="animate-fade-in-up text-center">
+      <div className="animate-fade-in-up mb-10 text-center">
         <h1
           className="text-[28px] font-semibold text-[var(--text-primary)]"
           style={{ letterSpacing: "-0.5px" }}
         >
           Syntropy
         </h1>
-        <p className="mt-[8px] text-[15px] italic text-[var(--text-secondary)]">
-          Piensa por ti mismo
+        <p className="mt-[8px] text-[15px] font-normal text-[var(--text-secondary)]">
+          ¿Qué necesitas pensar hoy?
         </p>
       </div>
 
-      <div className="animate-fade-in-up mt-[40px] text-center" style={{ animationDelay: "100ms" }}>
-        <p className="text-[20px] font-medium text-[var(--text-primary)]">
-          ¿Qué decisión necesitas pensar?
-        </p>
-        <button
-          onClick={handleStart}
-          className="mt-[20px] cursor-pointer rounded-[12px] bg-[var(--btn-primary)] px-[36px] py-[14px] text-[15px] font-medium text-white transition-opacity hover:opacity-90"
-        >
-          Empezar
-        </button>
+      <div className="grid w-full max-w-[660px] grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        {modes.map((mode, index) => (
+          <div
+            key={mode.id}
+            className="animate-fade-in-up"
+            style={{ animationDelay: `${index * 60}ms` }}
+          >
+            <ModeCard
+              name={mode.name}
+              subtitle={mode.subtitle}
+              icon={mode.icon}
+              color={mode.color}
+              active={mode.active}
+              onClick={() => handleModeClick(mode)}
+            />
+          </div>
+        ))}
       </div>
+
+      <FakeDoorDialog
+        modeName={dialogMode ?? ""}
+        isOpen={dialogMode !== null}
+        onClose={() => setDialogMode(null)}
+      />
 
       <ActiveSessionDialog
         isOpen={showActiveDialog}
