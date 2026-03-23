@@ -10,13 +10,14 @@ interface ChatProps {
   onSendMessage: (content: string) => void;
   isLoading?: boolean;
   sidebarOpen?: boolean;
+  onClose?: () => void;
 }
 
 export default function Chat({
   messages,
   onSendMessage,
   isLoading,
-  sidebarOpen = true,
+  onClose,
 }: ChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -26,16 +27,23 @@ export default function Chat({
 
   return (
     <div className="flex h-full flex-col bg-[var(--bg-surface)]">
-      <div
-        className="border-b border-[var(--border-light)] px-[24px] pb-[16px] pt-[20px] transition-[padding] duration-[250ms]"
-        style={{ paddingLeft: sidebarOpen ? 24 : 56 }}
-      >
+      <div className="flex items-center justify-between border-b border-[var(--border-light)] px-[20px] pb-[14px] pt-[18px]">
         <span className="text-[13px] font-medium text-[var(--text-muted)]">
           Chat socrático
         </span>
+        {onClose && (
+          <button
+            onClick={onClose}
+            title="Cerrar chat"
+            aria-label="Cerrar chat"
+            className="flex h-[24px] w-[24px] cursor-pointer items-center justify-center rounded-[6px] border-none bg-transparent text-[14px] text-[var(--text-faint)] transition-colors duration-150 hover:bg-[var(--bg-sidebar)] hover:text-[var(--text-secondary)]"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-[14px] overflow-y-auto px-[24px] py-[20px]">
+      <div className="flex flex-1 flex-col gap-[14px] overflow-y-auto px-[20px] py-[20px]">
         {messages.map((msg) => (
           <ChatMessage key={msg.id} message={msg} />
         ))}

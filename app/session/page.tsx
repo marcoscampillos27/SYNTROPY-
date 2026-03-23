@@ -41,13 +41,10 @@ function SessionContent() {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<"canvas" | "chat">("canvas");
+  const [chatOpen, setChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState("Guardado");
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
-  const [canvasOpen, setCanvasOpen] = useState(true);
-  const [canvasPercent, setCanvasPercent] = useState(55);
-  const isDragging = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -67,7 +64,6 @@ function SessionContent() {
   // Load session from localStorage
   useEffect(() => {
     // Save previous session immediately before loading new one
-    // Only if it still exists in storage (wasn't deleted)
     if (currentSessionRef.current) {
       const prevId = currentSessionRef.current.id;
       const stillExists = getSession(prevId);
@@ -118,37 +114,6 @@ function SessionContent() {
 
     setSections(loadedSections);
   }, [sessionId, router]);
-
-  // Drag resize handler
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const offsetFromRight = rect.right - e.clientX;
-      const percent = (offsetFromRight / rect.width) * 100;
-      // Clamp between 25% and 75%
-      setCanvasPercent(Math.min(75, Math.max(25, percent)));
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
-
-  const startDrag = () => {
-    isDragging.current = true;
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  };
 
   const buildCanvasContentForAPI = useCallback((): Record<string, string> => {
     const content: Record<string, string> = {};
@@ -314,15 +279,12 @@ function SessionContent() {
   );
 
   const handleNewSession = (deletedSessionId?: string) => {
-    // Cancel any pending debounced save
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
 
-    // Save current session immediately before switching (but not if it was just deleted)
     if (currentSession && currentSession.id !== deletedSessionId) {
       const canvasContent: Record<string, string> = {};
       sections.forEach((s) => { canvasContent[s.id] = s.value; });
       const firstSection = sections.find((s) => s.id === "1");
-      // Use localStorage title (may have been renamed via sidebar) as fallback
       let title = getSession(currentSession.id)?.title ?? currentSession.title;
       if (firstSection && firstSection.value.trim()) {
         title = firstSection.value.trim().length > 40
@@ -336,7 +298,7 @@ function SessionContent() {
       id: crypto.randomUUID(),
       role: "assistant",
       content:
-        "¿Qué decisión necesitas tomar? Escríbela aquí o en la primera sección del lienzo — cuanto más concreta, mejor. Yo no te daré respuestas, pero te haré las preguntas que necesitas para llegar a la tuya.",
+        "¿Con qué parte necesitas ayuda? Puedo ayudarte a pensar sobre cualquier sección del lienzo.",
       createdAt: new Date().toISOString(),
     };
 
@@ -352,14 +314,13 @@ function SessionContent() {
     };
     saveSession(newSession);
 
-    // Reset all state in-place
     setCurrentSession(newSession);
     setMessages([initialMessage]);
     setSections(decidirTemplate.map((t) => ({ ...t, value: "" })));
     setSaveStatus("Guardado");
     setIsLoading(false);
+    setChatOpen(false);
 
-    // Update URL without reload
     window.history.pushState(null, "", `/session?id=${newSession.id}`);
   };
 
@@ -432,7 +393,6 @@ function SessionContent() {
               sections={sections}
               onSectionValueChange={handleSectionValueChange}
               onSectionTitleChange={handleSectionTitleChange}
-
               sessionTitle={currentSession.title}
             />
           ) : (
@@ -440,7 +400,6 @@ function SessionContent() {
               messages={messages}
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
-
             />
           )}
         </div>
@@ -448,7 +407,7 @@ function SessionContent() {
     );
   }
 
-  // Desktop layout
+  // Desktop layout — Canvas center, Chat right panel
   return (
     <div className="flex h-screen">
       <Sidebar
@@ -470,50 +429,42 @@ function SessionContent() {
         </button>
       )}
 
-      <div className="flex flex-1 overflow-hidden" ref={containerRef}>
-        {/* Chat (left/center) */}
-        <div className="relative flex-1 overflow-hidden">
-          {!canvasOpen && (
-            <button
-              onClick={() => setCanvasOpen(true)}
-              className="absolute right-[12px] top-[18px] z-10 flex cursor-pointer items-center gap-[6px] rounded-[8px] border border-[var(--border-light)] bg-[var(--bg-canvas)] px-[10px] py-[6px] text-[12px] font-medium text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--bg-sidebar)]"
-            >
-              Lienzo
-            </button>
-          )}
-          <Chat
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-            sidebarOpen={sidebarOpen}
+      {/* Main area */}
+      <div className="relative flex flex-1 overflow-hidden">
+        {/* Canvas (center — always visible) */}
+        <div className="flex-1 overflow-hidden">
+          <Canvas
+            sections={sections}
+            onSectionValueChange={handleSectionValueChange}
+            onSectionTitleChange={handleSectionTitleChange}
+            sessionTitle={currentSession.title}
           />
         </div>
 
-        {/* Canvas (right) */}
-        {canvasOpen && (
-          <>
-            {/* Drag handle */}
-            <div
-              onMouseDown={startDrag}
-              className="flex w-[6px] shrink-0 cursor-col-resize items-center justify-center bg-[var(--border-light)] transition-colors duration-150 hover:bg-[var(--border)]"
-            >
-              <div className="h-[32px] w-[2px] rounded-full bg-[var(--text-faint)] opacity-40" />
-            </div>
+        {/* Chat toggle button — visible when chat is closed */}
+        {!chatOpen && (
+          <button
+            onClick={() => setChatOpen(true)}
+            className="absolute bottom-[24px] right-[24px] z-10 flex cursor-pointer items-center gap-[8px] rounded-full border border-[var(--border-light)] bg-[var(--btn-primary)] px-[20px] py-[12px] text-[14px] font-medium text-white shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all duration-200 hover:bg-[var(--btn-primary-hover)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.2)]"
+          >
+            <span className="text-[16px]">💬</span>
+            ¿Necesitas ayuda?
+          </button>
+        )}
 
-            <div
-              className="overflow-hidden"
-              style={{ width: `${canvasPercent}%` }}
-            >
-              <Canvas
-                sections={sections}
-                onSectionValueChange={handleSectionValueChange}
-                onSectionTitleChange={handleSectionTitleChange}
-  
-                onToggle={() => setCanvasOpen(false)}
-                sessionTitle={currentSession.title}
-              />
-            </div>
-          </>
+        {/* Chat panel (right side) */}
+        {chatOpen && (
+          <div
+            className="h-full shrink-0 border-l border-[var(--border-light)]"
+            style={{ width: "380px" }}
+          >
+            <Chat
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              onClose={() => setChatOpen(false)}
+            />
+          </div>
         )}
       </div>
     </div>

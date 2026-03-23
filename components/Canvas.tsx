@@ -21,7 +21,8 @@ export default function Canvas({
 }: CanvasProps) {
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-[var(--bg-page)]">
-      <div className="flex items-center justify-between px-[36px] pb-[20px] pt-[32px]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-[36px] pb-[12px] pt-[24px]">
         <div className="flex items-center gap-[8px]">
           <span className="block h-[8px] w-[8px] rounded-full bg-[var(--accent-green)]" />
           <span className="text-[13px] font-medium text-[var(--text-secondary)]">
@@ -29,10 +30,7 @@ export default function Canvas({
           </span>
         </div>
         <div className="flex items-center gap-[12px]">
-          <ExportButton
-            title={sessionTitle}
-            sections={sections}
-          />
+          <ExportButton title={sessionTitle} sections={sections} />
           {onToggle && (
             <button
               onClick={onToggle}
@@ -46,17 +44,29 @@ export default function Canvas({
         </div>
       </div>
 
-      <div className="mx-[24px] mb-[24px] rounded-[12px] bg-white px-[32px] py-[32px] shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-        {sections.map((section, index) => (
-          <div key={section.id} className={index < sections.length - 1 ? "mb-[28px]" : ""}>
-            <CanvasSection
-              section={section}
-              isLast={index === sections.length - 1}
-              onValueChange={onSectionValueChange}
-              onTitleChange={onSectionTitleChange}
-            />
-          </div>
-        ))}
+      {/* Paper sheet */}
+      <div className="mx-auto mb-[32px] w-full max-w-[720px] px-[24px]">
+        <div
+          className="rounded-[8px] bg-white px-[40px] py-[36px]"
+          style={{
+            boxShadow:
+              "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)",
+          }}
+        >
+          {sections.map((section, index) => (
+            <div
+              key={section.id}
+              className={index < sections.length - 1 ? "mb-[28px]" : ""}
+            >
+              <CanvasSection
+                section={section}
+                isLast={index === sections.length - 1}
+                onValueChange={onSectionValueChange}
+                onTitleChange={onSectionTitleChange}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
