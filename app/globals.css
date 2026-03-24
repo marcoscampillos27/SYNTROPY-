@@ -73,3 +73,12 @@ body {
 .animate-dot-1 { animation: dotPulse 1.4s ease-in-out infinite; }
 .animate-dot-2 { animation: dotPulse 1.4s ease-in-out 0.2s infinite; }
 .animate-dot-3 { animation: dotPulse 1.4s ease-in-out 0.4s infinite; }
+
+@keyframes sectionAppear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-section-appear {
+  animation: sectionAppear 0.3s ease both;
+}

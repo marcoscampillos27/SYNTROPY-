@@ -394,6 +394,7 @@ function SessionContent() {
               onSectionValueChange={handleSectionValueChange}
               onSectionTitleChange={handleSectionTitleChange}
               sessionTitle={currentSession.title}
+              sessionDate={currentSession.createdAt}
             />
           ) : (
             <Chat
@@ -439,6 +440,7 @@ function SessionContent() {
             onSectionValueChange={handleSectionValueChange}
             onSectionTitleChange={handleSectionTitleChange}
             sessionTitle={currentSession.title}
+              sessionDate={currentSession.createdAt}
           />
         </div>
 

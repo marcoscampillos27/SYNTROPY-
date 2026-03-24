@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { CanvasSection as CanvasSectionType } from "@/types";
 import CanvasSection from "./CanvasSection";
 import ExportButton from "./ExportButton";
+import ProcessSummary from "./ProcessSummary";
 
 interface CanvasProps {
   sections: CanvasSectionType[];
@@ -10,6 +12,19 @@ interface CanvasProps {
   onSectionTitleChange: (id: string, title: string) => void;
   onToggle?: () => void;
   sessionTitle?: string;
+  sessionDate?: string;
+}
+
+function calcInitialVisible(sections: CanvasSectionType[]): number {
+  let count = 0;
+  for (const s of sections) {
+    if (s.value.trim().length > 0) {
+      count++;
+    } else {
+      break;
+    }
+  }
+  return Math.max(Math.min(count + 1, sections.length), 2);
 }
 
 export default function Canvas({
@@ -18,7 +33,48 @@ export default function Canvas({
   onSectionTitleChange,
   onToggle,
   sessionTitle = "Sesión",
+  sessionDate = new Date().toISOString(),
 }: CanvasProps) {
+  const [visibleCount, setVisibleCount] = useState(() =>
+    calcInitialVisible(sections)
+  );
+  const [showSummary, setShowSummary] = useState(false);
+  const prevVisibleCount = useRef(visibleCount);
+
+  const sessionKey = sections.map((s) => s.id).join(",");
+  const prevSessionKey = useRef(sessionKey);
+  useEffect(() => {
+    if (prevSessionKey.current !== sessionKey) {
+      prevSessionKey.current = sessionKey;
+      const newCount = calcInitialVisible(sections);
+      setVisibleCount(newCount);
+      prevVisibleCount.current = newCount;
+    }
+  }, [sessionKey, sections]);
+
+  useEffect(() => {
+    if (visibleCount >= sections.length) return;
+    const lastVisible = sections[visibleCount - 1];
+    if (lastVisible && lastVisible.value.trim().length > 0) {
+      setVisibleCount((prev) => Math.min(prev + 1, sections.length));
+    }
+  }, [sections, visibleCount]);
+
+  const isNewlyVisible = (index: number) => {
+    return index >= prevVisibleCount.current && index < visibleCount;
+  };
+
+  useEffect(() => {
+    prevVisibleCount.current = visibleCount;
+  });
+
+  const visibleSections = sections.slice(0, visibleCount);
+  const allVisible = visibleCount >= sections.length;
+
+  // Show "Ver mi proceso" only when at least 2 sections have content
+  const filledCount = sections.filter((s) => s.value.trim().length > 0).length;
+  const showProcessButton = filledCount >= 2;
+
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-[var(--bg-page)]">
       {/* Header */}
@@ -30,6 +86,14 @@ export default function Canvas({
           </span>
         </div>
         <div className="flex items-center gap-[12px]">
+          {showProcessButton && (
+            <button
+              onClick={() => setShowSummary(true)}
+              className="cursor-pointer rounded-[8px] border border-[var(--border-light)] bg-transparent px-[14px] py-[6px] text-[12px] font-medium text-[var(--text-secondary)] transition-colors duration-150 hover:bg-[var(--bg-page)]"
+            >
+              Ver mi proceso
+            </button>
+          )}
           <ExportButton title={sessionTitle} sections={sections} />
           {onToggle && (
             <button
@@ -53,14 +117,14 @@ export default function Canvas({
               "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)",
           }}
         >
-          {sections.map((section, index) => (
+          {visibleSections.map((section, index) => (
             <div
               key={section.id}
-              className={index < sections.length - 1 ? "mb-[28px]" : ""}
+              className={`${index < visibleSections.length - 1 ? "mb-[28px]" : ""} ${isNewlyVisible(index) ? "animate-section-appear" : ""}`}
             >
               <CanvasSection
                 section={section}
-                isLast={index === sections.length - 1}
+                isLast={index === visibleSections.length - 1 && !allVisible}
                 onValueChange={onSectionValueChange}
                 onTitleChange={onSectionTitleChange}
               />
@@ -68,6 +132,15 @@ export default function Canvas({
           ))}
         </div>
       </div>
+
+      {/* Process summary modal */}
+      {showSummary && (
+        <ProcessSummary
+          sections={sections}
+          sessionDate={sessionDate}
+          onClose={() => setShowSummary(false)}
+        />
+      )}
     </div>
   );
 }
