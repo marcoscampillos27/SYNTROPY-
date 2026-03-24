@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { getActiveSession, saveSession, completeSession } from "@/lib/storage";
-import { Session } from "@/types";
+import { getActiveSession, completeSession } from "@/lib/storage";
 import { useState } from "react";
 import ActiveSessionDialog from "@/components/ActiveSessionDialog";
 
@@ -11,36 +10,13 @@ export default function Home() {
   const [showActiveDialog, setShowActiveDialog] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
-  const createNewSession = () => {
-    const newSession: Session = {
-      id: crypto.randomUUID(),
-      mode: "decidir",
-      title: "Nueva decisión",
-      status: "active",
-      canvasContent: {},
-      messages: [
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content:
-            "Empieza por el lienzo — escribe lo que tengas claro. Yo estaré aquí leyendo lo que escribas. Si te atascas, cuéntamelo. Y si veo algo que quizá no estás viendo, te lo señalaré.",
-          createdAt: new Date().toISOString(),
-        },
-      ],
-      createdAt: new Date().toISOString(),
-      completedAt: null,
-    };
-    saveSession(newSession);
-    router.push(`/session?id=${newSession.id}`);
-  };
-
   const handleStart = () => {
     const active = getActiveSession();
     if (active) {
       setActiveSessionId(active.id);
       setShowActiveDialog(true);
     } else {
-      createNewSession();
+      router.push("/session/new");
     }
   };
 
@@ -56,7 +32,7 @@ export default function Home() {
     if (activeSessionId) {
       completeSession(activeSessionId);
     }
-    createNewSession();
+    router.push("/session/new");
   };
 
   return (

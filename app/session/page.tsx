@@ -21,6 +21,8 @@ import {
 import Sidebar from "@/components/Sidebar";
 import Canvas from "@/components/Canvas";
 import Chat from "@/components/Chat";
+import SessionArtifact from "@/components/SessionArtifact";
+import { completeSession } from "@/lib/storage";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -43,6 +45,7 @@ function SessionContent() {
   const [activeTab, setActiveTab] = useState<"canvas" | "chat">("canvas");
   const [chatOpen, setChatOpen] = useState(true);
   const [chatWidth, setChatWidth] = useState(380);
+  const [showArtifact, setShowArtifact] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState("Guardado");
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
@@ -94,6 +97,13 @@ function SessionContent() {
     }
     setCurrentSession(session);
     setMessages(session.messages);
+
+    // Show artifact for completed sessions
+    if (session.status === "completed") {
+      setShowArtifact(true);
+    } else {
+      setShowArtifact(false);
+    }
 
     const loadedSections: CanvasSectionType[] = decidirTemplate.map((t) => ({
       ...t,
@@ -251,6 +261,7 @@ function SessionContent() {
           );
         }
 
+        const hasFinSesion = assistantText.includes("[FIN_SESION]");
         const finalDisplayText = assistantText
           .replace("[FIN_SESION]", "")
           .trim();
@@ -260,6 +271,12 @@ function SessionContent() {
         ];
         setMessages(finalMessages);
         persistSession(finalMessages);
+
+        if (hasFinSesion && currentSession) {
+          completeSession(currentSession.id);
+          setCurrentSession({ ...currentSession, status: "completed", completedAt: new Date().toISOString() });
+          setShowArtifact(true);
+        }
       } catch (err) {
         setIsLoading(false);
         const errorMsg: ChatMessage = {
@@ -295,35 +312,17 @@ function SessionContent() {
       saveSession({ ...currentSession, title, canvasContent, messages });
     }
 
-    const initialMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content:
-        "Empieza por el lienzo — escribe lo que tengas claro. Yo estaré aquí leyendo lo que escribas. Si te atascas, cuéntamelo. Y si veo algo que quizá no estás viendo, te lo señalaré.",
-      createdAt: new Date().toISOString(),
-    };
-
-    const newSession: Session = {
-      id: crypto.randomUUID(),
-      mode: "decidir",
-      title: "Nueva decisión",
-      status: "active",
-      canvasContent: {},
-      messages: [initialMessage],
-      createdAt: new Date().toISOString(),
-      completedAt: null,
-    };
-    saveSession(newSession);
-
-    setCurrentSession(newSession);
-    setMessages([initialMessage]);
-    setSections(decidirTemplate.map((t) => ({ ...t, value: "" })));
-    setSaveStatus("Guardado");
-    setIsLoading(false);
-    setChatOpen(true);
-
-    window.history.pushState(null, "", `/session?id=${newSession.id}`);
+    // Navigate to onboarding instead of creating session directly
+    router.push("/session/new");
   };
+
+  const artifactModal = showArtifact && currentSession ? (
+    <SessionArtifact
+      session={currentSession}
+      onViewFull={() => setShowArtifact(false)}
+      onNewSession={() => router.push("/session/new")}
+    />
+  ) : null;
 
   if (!currentSession) {
     return null;
@@ -404,6 +403,7 @@ function SessionContent() {
             />
           )}
         </div>
+        {artifactModal}
       </div>
     );
   }
@@ -492,6 +492,7 @@ function SessionContent() {
           </div>
         )}
       </div>
+      {artifactModal}
     </div>
   );
 }
